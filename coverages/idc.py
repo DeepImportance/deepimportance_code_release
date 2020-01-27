@@ -1,22 +1,19 @@
 import numpy as np
 from sklearn import cluster
-from datetime import datetime
 
 from utils import save_quantization, load_quantization, save_totalR, load_totalR
 from utils import save_layerwise_relevances, load_layerwise_relevances
 from utils import get_layer_outs_new
 from lrp_toolbox.model_io import write, read
 
-from scipy.spatial.distance import cdist
 from sklearn.metrics import silhouette_score
-import matplotlib.pyplot as plt
 
 experiment_folder = 'experiments'
 model_folder      = 'neural_networks'
 
-class CombCoverage:
+class ImportanceDrivenCoverage:
     def __init__(self,model, model_name, num_relevant_neurons, selected_class, subject_layer,
-                 train_inputs, train_labels):#, quantization_granularity):
+                 train_inputs, train_labels):
         self.covered_combinations = ()
 
         self.model = model
@@ -24,7 +21,6 @@ class CombCoverage:
         self.num_relevant_neurons = num_relevant_neurons
         self.selected_class = selected_class
         self.subject_layer = subject_layer
-#        self.quantization_granularity = quantization_granularity
         self.train_inputs = train_inputs
         self.train_labels = train_labels
 
@@ -278,32 +274,6 @@ def find_relevant_neurons(kerasmodel, lrpmodel, inps, outs, subject_layer, \
                 totalR[idx] = elem + R_all[idx]
 
         else: totalR = R_all
-
-        '''
-        if kerasmodel.layers[subject_layer].__class__.__name__ == 'Dense' and \
-                          final_relevance_method == 'sum':
-            final_relevants += R_all[subject_layer][0]
-        elif kerasmodel.layers[subject_layer].__class__.__name__ == 'Dense' and \
-                            final_relevance_method == 'count':
-            rel_idx = np.argsort(R_all[subject_layer][0])[::-1][:num_rel]
-            for fr_idx, _ in enumerate(final_relevants[0]):
-                if fr_idx in rel_idx:
-                    final_relevants[0][fr_idx] += 1
-        elif kerasmodel.layers[subject_layer].__class__.__name__ == 'Conv2D' and \
-                            final_relevance_method == 'sum':
-            for num_neuron in xrange(final_relevants.shape[-1]):
-                final_relevants[0][num_neuron] = np.mean(R_all[subject_layer][0][..., num_neuron])
-        elif kerasmodel.layers[subject_layer].__class__.__name__ == 'Conv2D' and \
-                            final_relevance_method == 'count':
-            avgs = []
-            for idx in xrange(R_all[subject_layer].shape[-1]):
-                avgs.append(np.mean(R_all[subject_layer][0][..., idx]))
-
-            rel_idx = np.argsort(avgs)[::-1][:num_rel]
-            for fr_idx, _ in enumerate(final_relevants[0]):
-                if fr_idx in rel_idx:
-                    final_relevants[0][fr_idx] += 1
-        '''
 
     #      THE MOST RELEVANT                               THE LEAST RELEVANT
     return np.argsort(final_relevants)[0][::-1][:num_rel], np.argsort(final_relevants)[0][:num_rel], totalR

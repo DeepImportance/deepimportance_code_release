@@ -9,7 +9,7 @@ from utils import save_layerwise_relevances, load_layerwise_relevances
 from utils import save_layer_outs, load_layer_outs, get_layer_outs_new
 from utils import save_data, load_data, save_quantization, load_quantization
 from utils import generate_adversarial, filter_correct_classifications
-from coverages.comb_cov import CombCoverage
+from coverages.idc import CombCoverage
 from coverages.neuron_cov import NeuronCoverage
 from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage

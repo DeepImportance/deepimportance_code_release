@@ -1,10 +1,10 @@
-from REBUTTAL_SCRIPTS.manipulate_dave import add_wn_frame, add_white_noise, add_wn_random
+from reproduce.manipulate_dave import add_wn_frame, add_white_noise, add_wn_random
 from utils import load_driving_data, load_dave_model
 from utils import get_trainable_layers
 from utils import save_data, load_data
 from utils import generate_adversarial
 from utils import preprocess_image
-from coverages.comb_cov import CombCoverage
+from coverages.idc import CombCoverage
 from coverages.neuron_cov import NeuronCoverage
 from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage

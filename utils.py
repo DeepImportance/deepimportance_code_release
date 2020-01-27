@@ -17,8 +17,6 @@ from keras.models import model_from_json
 from keras.layers import Input
 from keras.utils import np_utils
 from keras import models
-from math import ceil
-from sklearn.metrics import classification_report, confusion_matrix
 from lrp_toolbox.model_io import read
 from neural_networks.dave_model import Dave_orig
 
@@ -68,7 +66,7 @@ def load_MNIST(one_hot=True, channel_first=True):
     return X_train, y_train, X_test, y_test
 
 
-def load_driving_data(path='./driving_data/', batch_size=64, shape=(100, 100)):
+def load_driving_data(path='driving_data/', batch_size=64, shape=(100, 100)):
     xs = []
     ys = []
     start_load_time = time.time()

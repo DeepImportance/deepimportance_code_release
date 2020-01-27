@@ -1,10 +1,10 @@
 from keras.models import model_from_json, load_model
-from REBUTTAL_SCRIPTS.manipulate import add_wn_all, add_wn_frame, add_white_noise, add_wn_random
+from reproduce.manipulate import add_wn_all, add_wn_frame, add_white_noise, add_wn_random
 from utils import load_MNIST, load_CIFAR
 from utils import filter_val_set, get_trainable_layers
 from utils import save_data, load_data
 from utils import generate_adversarial, filter_correct_classifications
-from coverages.comb_cov import CombCoverage
+from coverages.idc import CombCoverage
 from coverages.neuron_cov import NeuronCoverage
 from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage

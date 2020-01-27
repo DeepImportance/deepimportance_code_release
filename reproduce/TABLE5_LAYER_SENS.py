@@ -4,8 +4,8 @@ from keras.models import model_from_json
 from utils import load_MNIST
 from utils import filter_val_set, get_trainable_layers
 from utils import filter_correct_classifications
-from coverages.comb_cov import CombCoverage
-from REBUTTAL_SCRIPTS.manipulate import add_white_noise
+from coverages.idc import CombCoverage
+from reproduce.manipulate import add_white_noise
 
 X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
 img_rows, img_cols = 28, 28
