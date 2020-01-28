@@ -4,7 +4,7 @@ from utils import get_trainable_layers
 from utils import save_data, load_data
 from utils import generate_adversarial
 from utils import preprocess_image
-from coverages.idc import CombCoverage
+from coverages.idc import ImportanceDrivenCoverage
 from coverages.neuron_cov import NeuronCoverage
 from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage
@@ -56,7 +56,7 @@ def parse_arguments():
     parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
                         or cifar10).", choices=["mnist", "cifar10"])  # , required=True)
     parser.add_argument("-A", "--approach", help="the approach to be employed \
-                        to measure coverage", choices=['cc', 'nc', 'kmnc',
+                        to measure coverage", choices=['idc', 'nc', 'kmnc',
                                                        'nbc', 'snac', 'tknc', 'ssc', 'lsa', 'dsa'])
     parser.add_argument("-C", "--class", help="the selected class", type=int)
     parser.add_argument("-Q", "--quantize", help="quantization granularity for \
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     model_path = args['model'] if args['model'] else 'neural_networks/LeNet5'
     dataset = args['dataset'] if args['dataset'] else 'mnist'
-    approach = args['approach'] if args['approach'] else 'cc'
+    approach = args['approach'] if args['approach'] else 'idc'
     num_rel_neurons = args['rel_neurons'] if args['rel_neurons'] else 10
     act_threshold = args['act_threshold'] if args['act_threshold'] else 0
     top_k = args['k_neurons'] if args['k_neurons'] else 3
@@ -182,9 +182,9 @@ if __name__ == "__main__":
         fw.write('\n')
         fw.close()
 
-    elif approach == 'cc':
+    elif approach == 'idc':
 
-        cc = CombCoverage(model, model_name, num_rel_neurons, selected_class,
+        cc = ImportanceDrivenCoverage(model, model_name, num_rel_neurons, selected_class,
                           subject_layer, X_train, Y_train)
 
         plt.ion()
