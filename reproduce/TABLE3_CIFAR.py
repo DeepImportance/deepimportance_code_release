@@ -142,7 +142,7 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    model_path = args['model'] if args['model'] else 'neural_networks/LeNet5'
+    model_path = args['model'] if args['model'] else 'neural_networks/cifar_original'
     dataset = args['dataset'] if args['dataset'] else 'mnist'
     approach = args['approach'] if args['approach'] else 'idc'
     num_rel_neurons = args['rel_neurons'] if args['rel_neurons'] else 10

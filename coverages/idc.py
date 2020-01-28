@@ -110,7 +110,7 @@ class ImportanceDrivenCoverage:
         ####################
         test_layer_outs = get_layer_outs_new(self.model, np.array(test_inputs))
 
-        coverage, covered_combinations = measure_combinatorial_coverage(self.model, self.model_name,
+        coverage, covered_combinations = measure_idc(self.model, self.model_name,
                                                                 test_inputs, self.subject_layer,
                                                                 relevant_neurons,
                                                                 self.selected_class,
@@ -215,11 +215,12 @@ def determine_quantized_cover(lout, quantized):
     return covered_comb
 
 
-def measure_combinatorial_coverage(model, model_name, test_inputs, subject_layer,
+def measure_idc(model, model_name, test_inputs, subject_layer,
                                    relevant_neurons, sel_class,
                                    test_layer_outs, qtized, is_conv,
                                    covered_combinations=()):
 
+    subject_layer = subject_layer - 1
     for test_idx in range(len(test_inputs)):
         if is_conv:
             lout = []
