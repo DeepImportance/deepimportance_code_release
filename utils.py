@@ -6,7 +6,7 @@ import datetime
 import time
 import random
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from cleverhans.attacks import SaliencyMapMethod, FastGradientMethod, CarliniWagnerL2, BasicIterativeMethod
 from cleverhans.utils_keras import KerasModelWrapper
 from keras import backend as K
@@ -178,7 +178,7 @@ def get_layer_outs(model, test_input, skip=[]):
 def get_layer_outs_new(model, inputs, skip=[]):
     # TODO: FIX LATER. This is done for solving incompatibility in Simos' computer
     # It is a shortcut.
-    # skip.append(0)
+    skip.append(0)
     evaluater = models.Model(inputs=model.input,
                              outputs=[layer.output for index, layer in enumerate(model.layers) \
                                       if index not in skip])
@@ -254,10 +254,10 @@ def get_python_version():
         return 2
 
 
-def show_image(vector):
-    img = vector
-    plt.imshow(img)
-    plt.show()
+# def show_image(vector):
+#     img = vector
+#     plt.imshow(img)
+#     plt.show()
 
 
 def save_quantization(qtized, filename, group_index):
