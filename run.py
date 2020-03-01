@@ -49,10 +49,10 @@ def parse_arguments():
     parser.add_argument("-M", "--model", help="Path to the model to be loaded.\
                         The specified model will be used.")#, required=True)
                         # choices=['lenet1','lenet4', 'lenet5'], required=True)
-    parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
-                        or cifar10).", choices=["mnist","cifar10"])#, required=True)
+    # parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
+    #                     or cifar10).", choices=["mnist","cifar10"])#, required=True)
     parser.add_argument("-A", "--approach", help="the approach to be employed \
-                        to measure coverage", choices=['cc','nc','kmnc',
+                        to measure coverage", choices=['idc','nc','kmnc',
                         'nbc','snac','tknc','ssc', 'lsa', 'dsa'])
     parser.add_argument("-C", "--class", help="the selected class", type=int)
     parser.add_argument("-Q", "--quantize", help="quantization granularity for \
@@ -103,13 +103,13 @@ if __name__ == "__main__":
 
 
     ####################
-    # 0) Load MNIST or CIFAR10 data
-    if dataset == 'mnist':
-        X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
-        img_rows, img_cols = 28, 28
-    else:
-        X_train, Y_train, X_test, Y_test = load_CIFAR()
-        img_rows, img_cols = 32, 32
+    # 0) Load data
+    # if dataset == 'mnist':
+    X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
+    img_rows, img_cols = 28, 28
+    # else:
+    #     X_train, Y_train, X_test, Y_test = load_CIFAR()
+    #     img_rows, img_cols = 32, 32
 
     if not selected_class == -1:
         X_train, Y_train = filter_val_set(selected_class, X_train, Y_train) #Get training input for selected_class
@@ -134,8 +134,6 @@ if __name__ == "__main__":
         model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])
-
-#        save_model(model, model_name+'_complete')
 
     except:
         model = load_model(model_path + '.h5')
@@ -162,15 +160,13 @@ if __name__ == "__main__":
     # 3) Analyze Coverages
     if approach == 'nc':
 
-        fw = open('validation_nc.log', 'a')
-
         nc = NeuronCoverage(model, threshold=.75, skip_layers = skip_layers) #SKIP ONLY INPUT AND FLATTEN LAYERS
         coverage, _, _, _, _ = nc.test(X_test)
         print("Your test set's coverage is: ", coverage)
 
         nc.set_measure_state(nc.get_measure_state())
 
-    elif approach == 'cc':
+    elif approach == 'idc':
         X_train_corr, Y_train_corr, _, _, = filter_correct_classifications(model,
                                                                            X_train,
                                                                            Y_train)
@@ -195,10 +191,7 @@ if __name__ == "__main__":
         dg = DeepGaugePercentCoverage(model, k_sect, X_train, None, skip_layers)
         score = dg.test(X_test)
 
-
     elif approach == 'tknc':
-
-        f = open('validation_tkn.log','a')
 
         dg = DeepGaugeLayerLevelCoverage(model, top_k, skip_layers=skip_layers)
         orig_coverage, _, _, _, _, orig_incrs = dg.test(X_test)
@@ -211,9 +204,7 @@ if __name__ == "__main__":
 
         print("Your test set's coverage is: ", score)
 
-
     elif approach == 'lsa' or approach == 'dsa':
-
         upper_bound = 2000
 
         layer_names = [model.layers[-3].name]
@@ -221,14 +212,8 @@ if __name__ == "__main__":
         #for lyr in model.layers:
         #    layer_names.append(lyr.name)
 
-        print(layer_names)
-
-        print(datetime.now())
-        sa = SurpriseAdequacy(model, X_train[:100], layer_names, upper_bound, dataset)
-        sa.test(X_test[:10], approach)
-        print(datetime.now())
-
+        sa = SurpriseAdequacy(model, X_train, layer_names, upper_bound, dataset)
+        sa.test(X_test, approach)
 
     logfile.close()
-
 
