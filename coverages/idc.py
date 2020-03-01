@@ -36,25 +36,13 @@ class ImportanceDrivenCoverage:
         #1.Find Relevant Neurons#
         #########################
 
-        #FOR CIFAR MODEL
-        #TODO: Should be automatically handled.
-        if 'cifar' in self.model_name.lower(): self.subject_layer = 12
-
         try:
-            if 'cifar' in self.model_name.lower() or 'dave' in self.model_name.lower():
-                totalR = load_totalR('%s/%s_%s_%d' %(experiment_folder, self.model_name,
-                                                        'totalR', self.selected_class), 0)
-
-                relevant_neurons = np.argsort(totalR[self.subject_layer])[0][::-1][:self.num_relevant_neurons]
-                least_relevant_neurons = np.argsort(totalR[self.subject_layer])[0][:self.num_relevant_neurons]
-
-            else:
-                relevant_neurons = load_layerwise_relevances('%s/%s_%d_%d_%d'
-                                                             %(experiment_folder,
-                                                               self.model_name,
-                                                               self.num_relevant_neurons,
-                                                               self.selected_class,
-                                                               self.subject_layer))
+            relevant_neurons = load_layerwise_relevances('%s/%s_%d_%d_%d'
+                                                         %(experiment_folder,
+                                                           self.model_name,
+                                                           self.num_relevant_neurons,
+                                                           self.selected_class,
+                                                           self.subject_layer))
         except:
             print("RN NOT FOUND!")
             # Convert keras model into txt
@@ -78,11 +66,6 @@ class ImportanceDrivenCoverage:
         ####################################
         if 'conv' in self.model.layers[self.subject_layer].name: is_conv = True
         else: is_conv = False
-
-        #FOR CIFAR MODEL
-        #TODO: Should be automatically handled.
-        if 'cifar' in self.model_name.lower(): self.subject_layer = -3
-        if 'dave' in self.model_name.lower(): self.subject_layer = -4
 
         try:
             qtized = load_quantization('%s/%s_%d_%d_%d_silhouette'
