@@ -100,7 +100,7 @@ class ImportanceDrivenCoverage:
                                                                 test_layer_outs, qtized, is_conv,
                                                                 self.covered_combinations)
 
-        return coverage, covered_combinations, len(qtized[0])
+        return coverage, covered_combinations#,# len(qtized[0])
 
 
 def quantize(out_vectors, conv, relevant_neurons, n_clusters=3):

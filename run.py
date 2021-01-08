@@ -9,7 +9,7 @@ from utils import save_layerwise_relevances, load_layerwise_relevances
 from utils import save_layer_outs, load_layer_outs, get_layer_outs_new
 from utils import save_data, load_data, save_quantization, load_quantization
 from utils import generate_adversarial, filter_correct_classifications
-from coverages.idc import CombCoverage
+from coverages.idc import ImportanceDrivenCoverage
 from coverages.neuron_cov import NeuronCoverage
 from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage
@@ -49,8 +49,8 @@ def parse_arguments():
     parser.add_argument("-M", "--model", help="Path to the model to be loaded.\
                         The specified model will be used.")#, required=True)
                         # choices=['lenet1','lenet4', 'lenet5'], required=True)
-    # parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
-    #                     or cifar10).", choices=["mnist","cifar10"])#, required=True)
+    parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
+                        or cifar10).", choices=["mnist","cifar10"])#, required=True)
     parser.add_argument("-A", "--approach", help="the approach to be employed \
                         to measure coverage", choices=['idc','nc','kmnc',
                         'nbc','snac','tknc','ssc', 'lsa', 'dsa'])
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     model_path     = args['model'] if args['model'] else 'neural_networks/LeNet5'
     dataset        = args['dataset'] if args['dataset'] else 'mnist'
-    approach       = args['approach'] if args['approach'] else 'cc'
+    approach       = args['approach'] if args['approach'] else 'idc'
     num_rel_neurons= args['rel_neurons'] if args['rel_neurons'] else 10
     act_threshold  = args['act_threshold'] if args['act_threshold'] else 0
     top_k          = args['k_neurons'] if args['k_neurons'] else 3
@@ -171,9 +171,9 @@ if __name__ == "__main__":
                                                                            X_train,
                                                                            Y_train)
 
-        cc = CombCoverage(model, model_name, num_rel_neurons, selected_class,
-                          subject_layer, X_train_corr, Y_train_corr,
-                          quantization_granularity)
+        cc = ImportanceDrivenCoverage(model, model_name, num_rel_neurons, selected_class,
+                          subject_layer, X_train_corr, Y_train_corr)#,
+                          #quantization_granularity)
 
         coverage, covered_combinations = cc.test(X_test)
         print("Your test set's coverage is: ", coverage)
