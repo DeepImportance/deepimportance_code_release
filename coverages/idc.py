@@ -37,6 +37,7 @@ class ImportanceDrivenCoverage:
         #########################
 
         try:
+            print("Loading relevance scores")
             relevant_neurons = load_layerwise_relevances('%s/%s_%d_%d_%d'
                                                          %(experiment_folder,
                                                            self.model_name,
@@ -44,7 +45,7 @@ class ImportanceDrivenCoverage:
                                                            self.selected_class,
                                                            self.subject_layer))
         except:
-            print("RN NOT FOUND!")
+            print("Relevance scores NOT FOUND; Calculating them now!")
             # Convert keras model into txt
             model_path = model_folder + '/' + self.model_name
             write(model_path, model_path, num_channels=test_inputs[0].shape[-1], fmt='keras_txt')
@@ -68,6 +69,7 @@ class ImportanceDrivenCoverage:
         else: is_conv = False
 
         try:
+            print("Loading unsupervised clustering results")
             qtized = load_quantization('%s/%s_%d_%d_%d_silhouette'
                                 %(experiment_folder,
                                 self.model_name,
@@ -75,7 +77,7 @@ class ImportanceDrivenCoverage:
                                 self.subject_layer,
                                 self.num_relevant_neurons),0)
         except:
-            print("Q NOT FOUND!")
+            print("Clustering results NOT FOUND; Calculating them now!")
             train_layer_outs = get_layer_outs_new(self.model, np.array(self.train_inputs))
 
             qtized = quantizeSilhouette(train_layer_outs[self.subject_layer], is_conv,
@@ -91,6 +93,7 @@ class ImportanceDrivenCoverage:
         ####################
         #3.Measure coverage#
         ####################
+        print("Calculating IDC coverage")
         test_layer_outs = get_layer_outs_new(self.model, np.array(test_inputs))
 
         coverage, covered_combinations = measure_idc(self.model, self.model_name,
