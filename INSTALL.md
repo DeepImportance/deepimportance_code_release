@@ -19,7 +19,8 @@ computer first install it as described
 [here](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 or [here](https://pip.pypa.io/en/stable/installing/).
 
-    pip install Tensorflow==1.10.0
+    pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.10.0-py2-none-any.whl (OSX) 
+    pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.10.0-py2-none-any.whl (Linux) 
     pip install Keras==2.2.2
     pip install numpy
     pip install scikit-learn
