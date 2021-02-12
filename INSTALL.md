@@ -1,6 +1,6 @@
 ## Setting up DeepImportance
 
-One can reeach the source code of our implementation via terminal command
+One can reach the source code of our implementation via terminal command
 
     git clone https://github.com/DeepImportance/deepimportance_code_release.git
 

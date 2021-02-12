@@ -1,0 +1,9 @@
+cleverhans==3.0.1
+Keras==2.2.2
+scikit-image==0.14.5
+scikit-learn==0.20.4
+scipy==1.2.3
+tensorflow==1.10.0
+matplotlib==2.2.5
+numpy==1.14.5
+Pillow==6.2.2
