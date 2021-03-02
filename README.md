@@ -19,3 +19,16 @@ Our implementation is publicly available in
 This artifact allows reproducing the experimental results presented in the paper. Below we
 describe how to reproduce results. Before going further, first, check
 installation page (i.e. INSTALL.md).
+
+
+### Notes
+* If you use Python 3.8, Cleverhans doe not yet support Tensforflow 2.x, so you should make a change at utils_tf.py
+    def kl_with_logits(p_logits, q_logits, scope=None, loss_collection=tf.compat.v1.GraphKeys.REGULARIZATION_LOSSES):
+
+   See [https://github.com/cleverhans-lab/cleverhans/issues/1183](https://github.com/cleverhans-lab/cleverhans/issues/1183)
+    
+
+
+### Updates
+
+* **02/03/21**: Updated with support for Python 3.8
