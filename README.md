@@ -22,9 +22,10 @@ installation page (i.e. INSTALL.md).
 
 
 ### Notes
-* If you use Python 3.8, Cleverhans doe not yet support Tensforflow 2.x, so you should make a change at utils_tf.py
-    def kl_with_logits(p_logits, q_logits, scope=None, loss_collection=tf.compat.v1.GraphKeys.REGULARIZATION_LOSSES):
-
+* If you use Python 3.8, Cleverhans does not yet support Tensforflow 2.x, so you should make a change at utils_tf.py
+```python
+def kl_with_logits(p_logits, q_logits, scope=None, loss_collection=tf.compat.v1.GraphKeys.REGULARIZATION_LOSSES):
+```
    See [https://github.com/cleverhans-lab/cleverhans/issues/1183](https://github.com/cleverhans-lab/cleverhans/issues/1183)
     
 
