@@ -3,7 +3,7 @@ from sklearn import cluster
 
 from utils import save_quantization, load_quantization, save_totalR, load_totalR
 from utils import save_layerwise_relevances, load_layerwise_relevances
-from utils import get_layer_outs_new
+from utils import get_layer_outs_new, create_dir
 from lrp_toolbox.model_io import write, read
 
 from sklearn.metrics import silhouette_score
@@ -24,6 +24,9 @@ class ImportanceDrivenCoverage:
         self.train_inputs = train_inputs
         self.train_labels = train_labels
 
+        #create experiment directory if not exists
+        create_dir(experiment_folder)
+
 
     def get_measure_state(self):
         return self.covered_combinations
@@ -38,12 +41,17 @@ class ImportanceDrivenCoverage:
 
         try:
             print("Loading relevance scores")
-            relevant_neurons = load_layerwise_relevances('%s/%s_%d_%d_%d'
-                                                         %(experiment_folder,
-                                                           self.model_name,
-                                                           self.num_relevant_neurons,
-                                                           self.selected_class,
-                                                           self.subject_layer))
+            totalR = load_totalR('%s/%s_%s_%d'
+                        %(experiment_folder, self.model_name,
+                          'totalR', self.selected_class), 0)
+
+            relevant_neurons = np.argsort(totalR[self.subject_layer])[0][::-1][:self.num_relevant_neurons]
+            # relevant_neurons = load_layerwise_relevances('%s/%s_%d_%d_%d'
+            #                                              %(experiment_folder,
+            #                                                self.model_name,
+            #                                                self.num_relevant_neurons,
+            #                                                self.selected_class,
+            #                                                self.subject_layer))
         except:
             print("Relevance scores NOT FOUND; Calculating them now!")
             # Convert keras model into txt
@@ -96,14 +104,14 @@ class ImportanceDrivenCoverage:
         print("Calculating IDC coverage")
         test_layer_outs = get_layer_outs_new(self.model, np.array(test_inputs))
 
-        coverage, covered_combinations = measure_idc(self.model, self.model_name,
+        coverage, covered_combinations, max_comb = measure_idc(self.model, self.model_name,
                                                                 test_inputs, self.subject_layer,
                                                                 relevant_neurons,
                                                                 self.selected_class,
                                                                 test_layer_outs, qtized, is_conv,
                                                                 self.covered_combinations)
 
-        return coverage, covered_combinations#,# len(qtized[0])
+        return coverage, covered_combinations, max_comb
 
 
 def quantize(out_vectors, conv, relevant_neurons, n_clusters=3):
@@ -138,6 +146,48 @@ def quantize(out_vectors, conv, relevant_neurons, n_clusters=3):
 
 
 def quantizeSilhouette(out_vectors, conv, relevant_neurons):
+    quantized_ = []
+
+    for i in relevant_neurons:
+
+        out_i = []
+        for l in out_vectors:
+            if conv: #conv layer
+                out_i.append(np.mean(l[...,i]))
+            else:
+                out_i.append(l[i])
+
+        #If it is a convolutional layer no need for 0 output check
+        if not conv:
+            out_i = [item for item in out_i if item != 0] # out_i = filter(lambda elem: elem != 0, out_i)
+
+        values = []
+        if not len(out_i) < 10: #10 is threshold of number positives in all test input activations
+            clusterSize = range(2, 5)#[2, 3, 4]
+            clustersDict = {}
+            for clusterNum in clusterSize:
+                kmeans          = cluster.KMeans(n_clusters=clusterNum)
+                clusterLabels   = kmeans.fit_predict(np.array(out_i).reshape(-1, 1))
+                silhouetteAvg   = silhouette_score(np.array(out_i).reshape(-1, 1), clusterLabels)
+                clustersDict [silhouetteAvg] = kmeans
+
+            maxSilhouetteScore = max(clustersDict.keys())
+            bestKMean          = clustersDict[maxSilhouetteScore]
+
+            values = bestKMean.cluster_centers_.squeeze()
+        values = list(values)
+        values = limit_precision(values)
+
+        # if not conv: values.append(0) #If it is convolutional layer we dont add  directly since thake average of whole filter.
+        if len(values) == 0:
+            values.append(0)
+
+        quantized_.append(values)
+
+    return quantized_
+
+
+def quantizeSilhouetteOld(out_vectors, conv, relevant_neurons):
     #if conv: n_clusters+=1
     quantized_ = []
 
@@ -152,8 +202,9 @@ def quantizeSilhouette(out_vectors, conv, relevant_neurons):
                 out_i.append(l[i])
 
         #If it is a convolutional layer no need for 0 output check
-        #if not conv: out_i = [item for item in out_i if item != 0]
-        out_i = filter(lambda elem: elem != 0, out_i)
+        if not conv:
+            out_i = [item for item in out_i if item != 0]
+        # out_i = filter(lambda elem: elem != 0, out_i)
         values = []
 
         if not len(out_i) < 10: #10 is threshold of number positives in all test input activations
@@ -180,6 +231,7 @@ def quantizeSilhouette(out_vectors, conv, relevant_neurons):
     #quantized_ = [quantized_[rn] for rn in relevant_neurons]
 
     return quantized_
+
 
 def limit_precision(values, prec=2):
     limited_values = []
@@ -227,17 +279,17 @@ def measure_idc(model, model_name, test_inputs, subject_layer,
     covered_num = len(covered_combinations)
     coverage = float(covered_num)/max_comb
 
-    return coverage*100, covered_combinations
+    return coverage*100, covered_combinations, max_comb
 
 
 def find_relevant_neurons(kerasmodel, lrpmodel, inps, outs, subject_layer, \
             num_rel, lrpmethod=None, final_relevance_method='sum'):
 
-    final_relevants = np.zeros([1, kerasmodel.layers[subject_layer].output_shape[-1]])
+    #final_relevants = np.zeros([1, kerasmodel.layers[subject_layer].output_shape[-1]])
 
     totalR = None
     cnt = 0
-    for inp in inps:
+    for inp in inps[:100]:
         cnt+=1
         ypred = lrpmodel.forward(np.expand_dims(inp, axis=0))
 
@@ -259,11 +311,13 @@ def find_relevant_neurons(kerasmodel, lrpmodel, inps, outs, subject_layer, \
         if totalR:
             for idx, elem in enumerate(totalR):
                 totalR[idx] = elem + R_all[idx]
-
-        else: totalR = R_all
+        else:
+            totalR = R_all
 
     #      THE MOST RELEVANT                               THE LEAST RELEVANT
-    return np.argsort(final_relevants)[0][::-1][:num_rel], np.argsort(final_relevants)[0][:num_rel], totalR
+    return np.argsort(totalR[subject_layer])[0][::-1][:num_rel], np.argsort(totalR[subject_layer])[0][:num_rel], totalR
+    # return np.argsort(final_relevants)[0][::-1][:num_rel], np.argsort(final_relevants)[0][:num_rel], totalR
+
 
 
 

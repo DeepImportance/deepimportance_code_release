@@ -11,7 +11,7 @@
 import os
 import pickle
 import numpy as np
-from modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPool,MaxPool
+from .modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPool,MaxPool
 #Team DeepFault
 from keras.models import model_from_json, load_model
 from keras.layers import Input

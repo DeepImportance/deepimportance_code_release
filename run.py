@@ -5,9 +5,6 @@ from keras.models import model_from_json, load_model, save_model
 
 from utils import load_MNIST, load_CIFAR
 from utils import filter_val_set, get_trainable_layers
-from utils import save_layerwise_relevances, load_layerwise_relevances
-from utils import save_layer_outs, load_layer_outs, get_layer_outs_new
-from utils import save_data, load_data, save_quantization, load_quantization
 from utils import generate_adversarial, filter_correct_classifications
 from coverages.idc import ImportanceDrivenCoverage
 from coverages.neuron_cov import NeuronCoverage
@@ -89,7 +86,7 @@ if __name__ == "__main__":
     model_path     = args['model'] if args['model'] else 'neural_networks/LeNet5'
     dataset        = args['dataset'] if args['dataset'] else 'mnist'
     approach       = args['approach'] if args['approach'] else 'idc'
-    num_rel_neurons= args['rel_neurons'] if args['rel_neurons'] else 10
+    num_rel_neurons= args['rel_neurons'] if args['rel_neurons'] else 2
     act_threshold  = args['act_threshold'] if args['act_threshold'] else 0
     top_k          = args['k_neurons'] if args['k_neurons'] else 3
     k_sect         = args['k_sections'] if args['k_sections'] else 1000
@@ -104,12 +101,12 @@ if __name__ == "__main__":
 
     ####################
     # 0) Load data
-    # if dataset == 'mnist':
-    X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
-    img_rows, img_cols = 28, 28
-    # else:
-    #     X_train, Y_train, X_test, Y_test = load_CIFAR()
-    #     img_rows, img_cols = 32, 32
+    if dataset == 'mnist':
+        X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
+        img_rows, img_cols = 28, 28
+    else:
+        X_train, Y_train, X_test, Y_test = load_CIFAR()
+        img_rows, img_cols = 32, 32
 
     if not selected_class == -1:
         X_train, Y_train = filter_val_set(selected_class, X_train, Y_train) #Get training input for selected_class
@@ -154,7 +151,7 @@ if __name__ == "__main__":
     for idx, lyr in enumerate(model.layers):
         if 'flatten' in lyr.__class__.__name__.lower(): skip_layers.append(idx)
 
-    print(skip_layers)
+    print("Skipping layers:", skip_layers)
 
     ####################
     # 3) Analyze Coverages
@@ -171,15 +168,16 @@ if __name__ == "__main__":
                                                                            X_train,
                                                                            Y_train)
 
-        cc = ImportanceDrivenCoverage(model, model_name, num_rel_neurons, selected_class,
-                          subject_layer, X_train_corr, Y_train_corr)#,
+        idc = ImportanceDrivenCoverage(model, model_name, num_rel_neurons, selected_class,
+                                       subject_layer, X_train_corr, Y_train_corr)#,
                           #quantization_granularity)
 
-        coverage, covered_combinations = cc.test(X_test)
-        print("Your test set's coverage is: ", coverage)
-        print("Number of covered combinations: ", len(covered_combinations))
+        coverage, covered_combinations, max_comb = idc.test(X_test)
+        print("IDC test set coverage: %.2f%% " % (coverage))
+        print("Covered combinations: ", len(covered_combinations))
+        print("Total combinations: ",   max_comb)
 
-        cc.set_measure_state(covered_combinations)
+        idc.set_measure_state(covered_combinations)
 
     elif approach == 'kmnc' or approach == 'nbc' or approach == 'snac':
 

@@ -1,5 +1,5 @@
 import traceback
-from os import path, makedirs
+import os
 import h5py
 import sys
 import datetime
@@ -178,7 +178,7 @@ def get_layer_outs(model, test_input, skip=[]):
 def get_layer_outs_new(model, inputs, skip=[]):
     # TODO: FIX LATER. This is done for solving incompatibility in Simos' computer
     # It is a shortcut.
-    skip.append(0)
+    # skip.append(0)
     evaluater = models.Model(inputs=model.input,
                              outputs=[layer.output for index, layer in enumerate(model.layers) \
                                       if index not in skip])
@@ -277,13 +277,14 @@ def load_quantization(filename, group_index):
             i = 0
             qtized = []
             while True:
-                qtized.append(group.get('q' + str(i)).value)
+                # qtized.append(group.get('q' + str(i)).value)
+                qtized.append(group.get('q' + str(i))[()])
                 i += 1
 
     except (IOError) as error:
         print("Could not open file: ", filename)
         sys.exit(-1)
-    except (AttributeError) as error:
+    except (AttributeError, TypeError) as error:
         print("Quantization results loaded from %s" % (filename))
         return qtized
 
@@ -377,8 +378,8 @@ def create_experiment_dir(experiment_path, model_name,
     experiment_name = model_name + '_C' + str(selected_class) + '_SS' + \
                       str(step_size) + '_' + approach + '_SN' + str(susp_num) + '_R' + str(repeat)
 
-    if not path.exists(experiment_path):
-        makedirs(experiment_path)
+    if not os.path.exists(experiment_path):
+        os.makedirs(experiment_path)
 
     return experiment_name
 
@@ -418,7 +419,7 @@ def save_totalR(totalR, filename, group_index):
         for i in range(len(totalR)):
             group.create_dataset("totalR_" + str(i), data=totalR[i])
 
-    print("totalR saved in ", filename)
+    print("total relevance data saved in ", filename)
     return
 
 
@@ -430,14 +431,15 @@ def load_totalR(filename, group_index):
             i = 0
             totalR = []
             while True:
-                totalR.append(group.get('totalR_' + str(i)).value)
+                # totalR.append(group.get('totalR_' + str(i)).value)
+                totalR.append(group.get('totalR_' + str(i))[()])
                 i += 1
 
-    except (IOError) as error:
+    except (IOError, OSError) as error:
         print("Could not open file: ", filename)
         traceback.print_exc()
         sys.exit(-1)
-    except (AttributeError) as error:
+    except (AttributeError, TypeError) as error:
         # because we don't know the exact dimensions (number of layers of our network)
         # we leave it to iterate until it throws an attribute error, and then return
         # layer outs to the caller function
@@ -464,14 +466,15 @@ def load_layer_outs(filename, group_index):
             i = 0
             layer_outs = []
             while True:
-                layer_outs.append(group.get('layer_outs_' + str(i)).value)
+                # layer_outs.append(group.get('layer_outs_' + str(i)).value)
+                layer_outs.append(group.get('layer_outs_' + str(i))[()])
                 i += 1
 
     except (IOError) as error:
         print("Could not open file: ", filename)
         traceback.print_exc()
         sys.exit(-1)
-    except (AttributeError) as error:
+    except (AttributeError, TypeError) as error:
         # because we don't know the exact dimensions (number of layers of our network)
         # we leave it to iterate until it throws an attribute error, and then return
         # layer outs to the caller function
@@ -665,9 +668,10 @@ def load_relevant_pixels(filename):
             i = 0
             relevant_pixels = []
             while True:
-                relevant_pixels.append(group.get('relevant_pixels_' + str(i)).value)
+                # relevant_pixels.append(group.get('relevant_pixels_' + str(i)).value)
+                relevant_pixels.append(group.get('relevant_pixels_' + str(i))[()])
                 i += 1
-    except (AttributeError) as error:
+    except (AttributeError, TypeError) as error:
         # because we don't know the exact number of inputs in each class
         # we leave it to iterate until it throws an attribute error, and then return
         # return relevant pixels to the caller function
@@ -675,3 +679,8 @@ def load_relevant_pixels(filename):
         print("Relevant pixels loaded from %s" % (filename))
 
         return relevant_pixels
+
+
+def create_dir(dir_name):
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
