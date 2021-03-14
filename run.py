@@ -16,7 +16,10 @@ from coverages.kmn import DeepGaugePercentCoverage
 from coverages.ss import SSCover
 from coverages.sa import SurpriseAdequacy
 from lrp_toolbox.model_io import write, read
-
+import tensorflow as tf
+from tensorflow.keras.applications.resnet50 import ResNet50
+import tensorflow_datasets as tfds
+import numpy as np
 
 __version__ = 0.9
 
@@ -50,7 +53,7 @@ def parse_arguments():
                         The specified model will be used.")#, required=True)
                         # choices=['lenet1','lenet4', 'lenet5'], required=True)
     parser.add_argument("-DS", "--dataset", help="The dataset to be used (mnist\
-                        or cifar10).", choices=["mnist","cifar10"])#, required=True)
+                        imagenet, or cifar10).", choices=["mnist","cifar10", "imagenet"])#, required=True)
     parser.add_argument("-A", "--approach", help="the approach to be employed \
                         to measure coverage", choices=['idc','nc','kmnc',
                         'nbc','snac','tknc','ssc', 'lsa', 'dsa'])
@@ -104,39 +107,56 @@ if __name__ == "__main__":
 
     ####################
     # 0) Load data
-    # if dataset == 'mnist':
-    X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
-    img_rows, img_cols = 28, 28
+    if dataset == 'mnist':
+        X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
+        img_rows, img_cols = 28, 28
+        if not selected_class == -1:
+            X_train, Y_train = filter_val_set(selected_class, X_train, Y_train)  # Get training input for selected_class
+            X_test, Y_test = filter_val_set(selected_class, X_test, Y_test)  # Get testing input for selected_class
+
     # else:
     #     X_train, Y_train, X_test, Y_test = load_CIFAR()
     #     img_rows, img_cols = 32, 32
 
-    if not selected_class == -1:
-        X_train, Y_train = filter_val_set(selected_class, X_train, Y_train) #Get training input for selected_class
-        X_test, Y_test = filter_val_set(selected_class, X_test, Y_test) #Get testing input for selected_class
+    # Prepare imagenet dataset
+    if dataset == "imagenet":
+        ds = tfds.load('imagenet_v2', split='test', shuffle_files=True)
+
+        ds = ds.take(10)
+        X_test = []
+        for example in ds:  # example is `{'image': tf.Tensor, 'label': tf.Tensor}`
+            # example["image"] = tf.image.resize(example["image"],[224,224]).numpy().reshape(-1,224,224,3)
+            example["image"] = tf.image.resize(example["image"], [224, 224]).numpy().reshape(224, 224, 3)
+            example["image"] = example["image"].astype('float32')
+            example["image"] /= 255
+            X_test.append(example["image"])
+
 
 
 
     ####################
     # 1) Setup the model
-    model_name = model_path.split('/')[-1]
 
+    if model_path == "resnet":
+        model = ResNet50(weights="imagenet")
+    else:
+        model_name = model_path.split('/')[-1]
+        try:
+            json_file = open(model_path + '.json', 'r') #Read Keras model parameters (stored in JSON file)
+            file_content = json_file.read()
+            json_file.close()
 
-    try:
-        json_file = open(model_path + '.json', 'r') #Read Keras model parameters (stored in JSON file)
-        file_content = json_file.read()
-        json_file.close()
+            model = model_from_json(file_content)
+            model.load_weights(model_path + '.h5')
 
-        model = model_from_json(file_content)
-        model.load_weights(model_path + '.h5')
+            # Compile the model before using
+            model.compile(loss='categorical_crossentropy',
+                          optimizer='adam',
+                          metrics=['accuracy'])
 
-        # Compile the model before using
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
+        except:
+            model = load_model(model_path + '.h5')
 
-    except:
-        model = load_model(model_path + '.h5')
 
     # 2) Load necessary information
     trainable_layers = get_trainable_layers(model)
@@ -146,11 +166,11 @@ if __name__ == "__main__":
 
     experiment_folder = 'experiments'
 
-    #Investigate the penultimate layer
+    # Investigate the penultimate layer
     subject_layer = args['layer'] if not args['layer'] == None else -1
     subject_layer = trainable_layers[subject_layer]
-
-    skip_layers = [0] #SKIP LAYERS FOR NC, KMNC, NBC etc.
+    # SKIP LAYERS FOR NC, KMNC, NBC etc.
+    skip_layers = [0]
     for idx, lyr in enumerate(model.layers):
         if 'flatten' in lyr.__class__.__name__.lower(): skip_layers.append(idx)
 
@@ -159,8 +179,10 @@ if __name__ == "__main__":
     ####################
     # 3) Analyze Coverages
     if approach == 'nc':
-
-        nc = NeuronCoverage(model, threshold=.75, skip_layers = skip_layers) #SKIP ONLY INPUT AND FLATTEN LAYERS
+        # SKIP ONLY INPUT AND FLATTEN LAYERS
+        if model_path == "resnet":
+            X_test = np.array(X_test)
+        nc = NeuronCoverage(model, threshold=.75, skip_layers = skip_layers)
         coverage, _, _, _, _ = nc.test(X_test)
         print("Your test set's coverage is: ", coverage)
 
