@@ -12,7 +12,6 @@ from coverages.tkn import DeepGaugeLayerLevelCoverage
 from coverages.kmn import DeepGaugePercentCoverage
 from coverages.ss import SSCover
 from coverages.sa import SurpriseAdequacy
-from lrp_toolbox.model_io import write, read
 
 
 __version__ = 0.9
@@ -98,12 +97,11 @@ if __name__ == "__main__":
 
     logfile = open(logfile_name, 'a')
 
-
     ####################
     # 0) Load data
     if dataset == 'mnist':
-        X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
-        img_rows, img_cols = 28, 28
+            X_train, Y_train, X_test, Y_test = load_MNIST(channel_first=False)
+            img_rows, img_cols = 28, 28
     else:
         X_train, Y_train, X_test, Y_test = load_CIFAR()
         img_rows, img_cols = 32, 32
@@ -118,7 +116,6 @@ if __name__ == "__main__":
     # 1) Setup the model
     model_name = model_path.split('/')[-1]
 
-
     try:
         json_file = open(model_path + '.json', 'r') #Read Keras model parameters (stored in JSON file)
         file_content = json_file.read()
@@ -131,7 +128,6 @@ if __name__ == "__main__":
         model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])
-
     except:
         model = load_model(model_path + '.h5')
 
@@ -164,15 +160,17 @@ if __name__ == "__main__":
         nc.set_measure_state(nc.get_measure_state())
 
     elif approach == 'idc':
+        print("\nRunning IDC for %d relevant neurons" % (num_rel_neurons))
+
         X_train_corr, Y_train_corr, _, _, = filter_correct_classifications(model,
                                                                            X_train,
                                                                            Y_train)
 
         idc = ImportanceDrivenCoverage(model, model_name, num_rel_neurons, selected_class,
-                                       subject_layer, X_train_corr, Y_train_corr)#,
-                          #quantization_granularity)
+                                       subject_layer, X_train_corr, Y_train_corr)
 
         coverage, covered_combinations, max_comb = idc.test(X_test)
+        print("Analysed %d test inputs" % len(Y_train_corr))
         print("IDC test set coverage: %.2f%% " % (coverage))
         print("Covered combinations: ", len(covered_combinations))
         print("Total combinations: ",   max_comb)

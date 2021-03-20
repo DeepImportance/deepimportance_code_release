@@ -52,8 +52,8 @@ class ImportanceDrivenCoverage:
             #                                                self.num_relevant_neurons,
             #                                                self.selected_class,
             #                                                self.subject_layer))
-        except:
-            print("Relevance scores NOT FOUND; Calculating them now!")
+        except Exception as e:
+            print("Relevance scores must be calculated. Doing it now!")
             # Convert keras model into txt
             model_path = model_folder + '/' + self.model_name
             write(model_path, model_path, num_channels=test_inputs[0].shape[-1], fmt='keras_txt')
@@ -209,7 +209,7 @@ def quantizeSilhouetteOld(out_vectors, conv, relevant_neurons):
 
         if not len(out_i) < 10: #10 is threshold of number positives in all test input activations
 
-            clusterSize = range(2, 5)#[2, 3, 4, 5]
+            clusterSize = range(2, 6)#[2, 3, 4, 5]
             clustersDict = {}
             for clusterNum in clusterSize:
                 kmeans          = cluster.KMeans(n_clusters=clusterNum)
@@ -289,7 +289,7 @@ def find_relevant_neurons(kerasmodel, lrpmodel, inps, outs, subject_layer, \
 
     totalR = None
     cnt = 0
-    for inp in inps[:100]:
+    for inp in inps:
         cnt+=1
         ypred = lrpmodel.forward(np.expand_dims(inp, axis=0))
 

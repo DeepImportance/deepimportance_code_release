@@ -435,10 +435,11 @@ def load_totalR(filename, group_index):
                 totalR.append(group.get('totalR_' + str(i))[()])
                 i += 1
 
-    except (IOError, OSError) as error:
-        print("Could not open file: ", filename)
-        traceback.print_exc()
-        sys.exit(-1)
+    except (IOError) as error:
+        print("File %s does not exist" % (filename))
+        # print("Could not open file: ", filename)
+        # traceback.print_exc()
+        return None
     except (AttributeError, TypeError) as error:
         # because we don't know the exact dimensions (number of layers of our network)
         # we leave it to iterate until it throws an attribute error, and then return
@@ -549,7 +550,7 @@ def get_trainable_layers(model):
     return trainable_layers
 
 
-def weight_analysis(model):
+def weight_analysis(model, target_layer):
     threshold_weight = 0.1
     deactivatables = []
     for i in range(2, target_layer + 1):
